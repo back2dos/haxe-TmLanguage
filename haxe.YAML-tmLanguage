@@ -453,6 +453,7 @@ repository:
         '0': {name: storage.type.class.javadoc}
   strings:
     patterns:
+    - include: '#xml-strings'
     - begin: '"'
       beginCaptures:
         '0': {name: punctuation.definition.string.begin.hx}
@@ -818,7 +819,6 @@ repository:
     name: storage.modifier.hx
   method-call:
     patterns:
-    - include: '#jsx'
     # for a starting point, run this on the haxe repo:
     # egrep -oh -r --include=*.hx '__[a-z][A-Za-z_]+__\s*\(' | sort | uniq | cut -c 3- | rev | cut -c 4- | rev
     - begin: \b(?:(__(?:addressOf|as|call|checked|cpp|cs|define_feature|delete|feature|field|fixed|foreach|forin|has_next|hkeys|in|int|is|java|js|keys|lock|lua|lua_table|new|php|physeq|prefix|ptr|resources|rethrow|set|setfield|sizeof|type|typeof|unprotect|unsafe|valueOf|var|vector|vmem_get|vmem_set|vmem_sign|instanceof|strict_eq|strict_neq)__)|([_a-z]\w*))\s*(\()
@@ -964,143 +964,202 @@ repository:
   identifier-name:
     match: '\b([_A-Za-z]\w*)\b'
     name: variable.other.hx
-  # jsx keyword and inline xml syntax (see react haxelib)
-  jsx:
+  
+  # XML embedded in strings
+  xml-strings:
     patterns:
-    - begin: \b(jsx) *\( *(')
+    # strings that begin with an xml tag `<tagname`
+    - begin: (')\s*(?=<([a-zA-Z][a-zA-Z0-9_-]*\b|[!%]--))
       beginCaptures:
-        '1': {name: keyword.other.jsx.hx}
-        '2': {name: punctuation.definition.comment.hx}
-      end: (') *\)
+        '1': {name: punctuation.definition.comment.hx}
+        '2': {name: keyword.other.xml.hx}
+      end: (')
       endCaptures:
         '1': {name: punctuation.definition.comment.hx}
-      name: meta.jsx.hx
+      name: meta.xml.hx
       patterns:
       - match: \\.
         name: constant.character.escape.hx
-      - include: '#jsx-in-single-quoted'
-    - begin: \b(jsx) *\( *(")
+      - include: '#xml-in-single-quoted'
+    - begin: (")\s*(?=<([a-zA-Z][a-zA-Z0-9_-]*\b|[!%]--))
       beginCaptures:
-        '1': {name: keyword.other.jsx.hx}
-        '2': {name: punctuation.definition.comment.hx}
-      end: (') *\)
+        '1': {name: punctuation.definition.comment.hx}
+        '2': {name: keyword.other.xml.hx}
+      end: (")
       endCaptures:
         '1': {name: punctuation.definition.comment.hx}
-      name: meta.jsx.hx
+      name: meta.xml.hx
       patterns:
       - match: \\.
         name: constant.character.escape.hx
-      - include: '#jsx-in-double-quoted'
-  jsx-in-single-quoted:
-    name: meta.jsx.hx
+      - include: '#xml-in-double-quoted'
+    # explicit xml strings preceded with `@xml`
+    - begin: (?<=(@xml))\s*(")
+      beginCaptures:
+        '2': {name: punctuation.definition.comment.hx}
+      end: (")
+      endCaptures:
+        '1': {name: punctuation.definition.comment.hx}
+      name: meta.xml.hx
+      patterns:
+      - match: \\.
+        name: constant.character.escape.hx
+      - include: '#xml-in-double-quoted'
+    - begin: (?<=(@xml))\s*(')
+      beginCaptures:
+        '2': {name: punctuation.definition.comment.hx}
+      end: (')
+      endCaptures:
+        '1': {name: punctuation.definition.comment.hx}
+      name: meta.xml.hx
+      patterns:
+      - match: \\.
+        name: constant.character.escape.hx
+      - include: '#xml-in-single-quoted'
+    # explicit xml strings preceded with `jsx(` (framework-specific)
+    - begin: (?<=(jsx\())\s*(")
+      beginCaptures:
+        '2': {name: punctuation.definition.comment.hx}
+      end: (")
+      endCaptures:
+        '1': {name: punctuation.definition.comment.hx}
+      name: meta.xml.hx
+      patterns:
+      - match: \\.
+        name: constant.character.escape.hx
+      - include: '#xml-in-double-quoted'
+    - begin: (?<=(jsx\())\s*(')
+      beginCaptures:
+        '2': {name: punctuation.definition.comment.hx}
+      end: (')
+      endCaptures:
+        '1': {name: punctuation.definition.comment.hx}
+      name: meta.xml.hx
+      patterns:
+      - match: \\.
+        name: constant.character.escape.hx
+      - include: '#xml-in-single-quoted'
+  xml-in-single-quoted:
+    name: meta.xml.hx
     patterns:
-    - include: '#jsx-tag-open-in-single-quoted'
-    - include: '#jsx-tag-close'
-    - include: '#jsx-tag-invalid'
-    - include: '#jsx-comments'
-  jsx-in-double-quoted:
-    name: meta.jsx.hx
+    - include: '#xml-tag-open-in-single-quoted'
+    - include: '#xml-tag-close'
+    - include: '#xml-tag-invalid'
+    - include: '#xml-comments-in-single-quoted'
+  xml-in-double-quoted:
+    name: meta.xml.hx
     patterns:
-    - include: '#jsx-tag-open-in-double-quoted'
-    - include: '#jsx-tag-close'
-    - include: '#jsx-tag-invalid'
-    - include: '#jsx-comments'
-  jsx-tag-open-in-single-quoted:
+    - include: '#xml-tag-open-in-double-quoted'
+    - include: '#xml-tag-close'
+    - include: '#xml-tag-invalid'
+    - include: '#xml-comments-in-double-quoted'
+  xml-tag-open-in-single-quoted:
     begin: (<)([a-zA-Z0-9\.:$_]+)
-    end: (/?>)
+    end: (?:(/?>)|(?=(?<!\\)'))
     name: tag.open.hx
     beginCaptures:
       '1': {name: punctuation.definition.tag.begin.hx}
       '2': {name: entity.name.tag.hx}
     endCaptures:
       '1': {name: punctuation.definition.tag.end.hx}
+      '2': {name: entity.name.tag.hx}
     patterns:
-    - include: '#jsx-tag-attributes-in-single-quoted'
-  jsx-tag-open-in-double-quoted:
+    - include: '#xml-tag-attributes-in-single-quoted'
+  xml-tag-open-in-double-quoted:
     begin: (<)([a-zA-Z0-9\.:$_]+)
-    end: (/?>)
+    end: (?:(/?>)|(?=(?<!\\)"))
     name: tag.open.hx
     beginCaptures:
       '1': {name: punctuation.definition.tag.begin.hx}
       '2': {name: entity.name.tag.hx}
     endCaptures:
       '1': {name: punctuation.definition.tag.end.hx}
+      '2': {name: entity.name.tag.hx}
     patterns:
-    - include: '#jsx-tag-attributes-in-double-quoted'
-  jsx-tag-close:
+    - include: '#xml-tag-attributes-in-double-quoted'
+  xml-tag-close:
     match: (</)([^>]+)(>)
     name: tag.closed.hx
     captures:
       '1': {name: punctuation.definition.tag.begin.hx}
       '2': {name: entity.name.tag.hx}
       '3': {name: punctuation.definition.tag.end.hx}
-  jsx-tag-invalid:
+  xml-tag-invalid:
     name: invalid.illegal.tag.incomplete.hx
     match: <\s*>
-  jsx-comments:
+  xml-comments-in-single-quoted:
     begin: <[!%]--
     captures:
       '0': {name: punctuation.definition.comment.xml}
-    end: --%?>
+    end: (?:(--%?>)|(?=(?<!\\)'))
     name: comment.block.xml
-  jsx-tag-attributes-in-single-quoted:
+  xml-comments-in-double-quoted:
+    begin: <[!%]--
+    captures:
+      '0': {name: punctuation.definition.comment.xml}
+    end: (?:(--%?>)|(?=(?<!\\)"))
+    name: comment.block.xml
+  xml-tag-attributes-in-single-quoted:
     patterns:
-    - include: '#jsx-tag-attribute-name'
-    - include: '#jsx-string-double-quoted'
-    - include: '#jsx-string-single-quoted-escaped'
-    - include: '#jsx-evaluated-code'
-  jsx-tag-attributes-in-double-quoted:
+    - include: '#xml-evaluated-code'
+    - include: '#xml-tag-attribute-name'
+    - include: '#xml-string-double-quoted'
+    - include: '#xml-string-single-quoted-escaped'
+    - include: '#xml-braces-in-single-quoted'
+  xml-tag-attributes-in-double-quoted:
     patterns:
-    - include: '#jsx-tag-attribute-name'
-    - include: '#jsx-string-single-quoted'
-    - include: '#jsx-string-double-quoted-escaped'
-    - include: '#jsx-evaluated-code'
-  jsx-tag-attribute-name:
+    - include: '#xml-tag-attribute-name'
+    - include: '#xml-string-single-quoted'
+    - include: '#xml-string-double-quoted-escaped'
+    - include: '#xml-braces-in-double-quoted'
+  xml-tag-attribute-name:
     name: meta.tag.attribute-name.hx
     match: (?:\$[a-zA-Z0-9\-:]+|\b([a-zA-Z0-9\-:]+))
     captures:
       '1': {name: entity.other.attribute-name.haxe}
-  jsx-string-single-quoted:
+  xml-string-single-quoted:
     begin: ''''
-    end: ''''
+    end: (?:(')|(?=(?<!\\)"))
     name: string.quoted.single.hx
     beginCaptures:
       '0': {name: punctuation.definition.string.begin.hx}
     endCaptures:
-      '0': {name: punctuation.definition.string.end.hx}
+      '1': {name: punctuation.definition.string.end.hx}
+      '2': {name: punctuation.definition.string.end.hx}
     patterns:
-    - include: '#jsx-entities'
-  jsx-string-double-quoted:
+    - include: '#xml-entities'
+  xml-string-double-quoted:
     begin: '"'
-    end: '"'
+    end: (?:(")|(?=(?<!\\)'))
     name: string.quoted.double.hx
     beginCaptures:
       '0': {name: punctuation.definition.string.begin.hx}
     endCaptures:
-      '0': {name: punctuation.definition.string.end.hx}
+      '1': {name: punctuation.definition.string.end.hx}
+      '2': {name: punctuation.definition.string.end.hx}
     patterns:
-    - include: '#jsx-entities'
-  jsx-string-single-quoted-escaped:
+    - include: '#xml-entities'
+  xml-string-single-quoted-escaped:
     begin: \\'
-    end: \\'
+    end: (?:(\\')|(?=(?<!\\)'))
     name: string.quoted.single.haxe
     beginCaptures:
       '0': {name: punctuation.definition.string.escaped.begin.hx}
     endCaptures:
       '0': {name: punctuation.definition.string.escaped.end.hx}
     patterns:
-    - include: '#jsx-entities'
-  jsx-string-double-quoted-escaped:
+    - include: '#xml-entities'
+  xml-string-double-quoted-escaped:
     begin: \\"
-    end: \\"
+    end: (?:(\\")|(?=(?<!\\)"))
     name: string.quoted.double.haxe
     beginCaptures:
       '0': {name: punctuation.definition.string.escaped.begin.hx}
     endCaptures:
       '0': {name: punctuation.definition.string.escaped.end.hx}
     patterns:
-    - include: '#jsx-entities'
-  jsx-entities:
+    - include: '#xml-entities'
+  xml-entities:
     patterns:
     - name: constant.character.entity.hx
       match: (&)([a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+)(;)
@@ -1109,13 +1168,49 @@ repository:
         '3': {name: punctuation.definition.entity.hx}
     - name: invalid.illegal.bad-ampersand.hx
       match: '&'
-  jsx-evaluated-code:
+  xml-braces-in-single-quoted:
     begin: '{'
-    end: '}'
+    end: (?:(})|(?=(?<!\\)'))
     name: meta.brace.curly.hx
     endCaptures:
       '0': {name: punctuation.definition.brace.curly.start.hx}
     beginCaptures:
       '0': {name: punctuation.definition.brace.curly.end.hx}
+  xml-braces-in-double-quoted:
+    begin: '{'
+    end: (?:(})|(?=(?<!\\)"))
+    name: meta.brace.curly.hx
+    endCaptures:
+      '0': {name: punctuation.definition.brace.curly.start.hx}
+    beginCaptures:
+      '0': {name: punctuation.definition.brace.curly.end.hx}
+  xml-evaluated-code:
     patterns:
-    - include: '$self'
+    - begin: \$(?=\$)
+      beginCaptures:
+        '0': {name: constant.character.escape.hx}
+      end: \$
+      endCaptures:
+        '0': {name: constant.character.escape.hx}
+      name: string.quoted.single.hx
+    - begin: \\(?=.)
+      beginCaptures:
+        '0': {name: constant.character.escape.hx}
+      end: .
+      endCaptures:
+        '0': {name: constant.character.escape.hx}
+      name: string.quoted.single.hx
+    # 'String interpolation : "${test.ole}"'
+    - begin: (\${)
+      beginCaptures:
+        '0': {name: punctuation.definition.block.begin.hx}
+      end: (})
+      endCaptures:
+        '0': {name: punctuation.definition.block.end.hx}
+      patterns:
+      - include: '#block-contents'
+    # String interpolation : "$test"'
+    - match: (\$)([_a-zA-Z]\w*)
+      captures:
+        '1': {name: punctuation.definition.block.begin.hx}
+        '2': {name: variable.other.hx}
