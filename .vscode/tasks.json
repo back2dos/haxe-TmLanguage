@@ -1,86 +1,21 @@
-// This file is generated with vshaxe-build - DO NOT EDIT MANUALLY!
 {
-    "suppressTaskName": true,
     "version": "2.0.0",
-    "command": "haxelib",
     "tasks": [
         {
-            "args": [
-                "run",
-                "vshaxe-build",
-                "-t",
-                "tm-language",
-                "--debug"
-            ],
-            "taskName": "tm-language",
-            "problemMatcher": "$haxe"
+            "type": "vshaxe-build",
+            "target": "tm-language",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
-            "args": [
-                "run",
-                "vshaxe-build",
-                "-t",
-                "tm-language-conversion",
-                "--debug"
-            ],
-            "taskName": "tm-language-conversion",
-            "problemMatcher": "$haxe"
-        },
-        {
-            "args": [
-                "run",
-                "vshaxe-build",
-                "-t",
-                "tm-language-tests",
-                "--debug"
-            ],
-            "taskName": "tm-language-tests",
-            "problemMatcher": "$haxe"
-        },
-        {
-            "args": [
-                "run",
-                "vshaxe-build",
-                "-t",
-                "tm-language-build-tests",
-                "--debug"
-            ],
-            "taskName": "tm-language-build-tests",
-            "problemMatcher": "$haxe"
-        },
-        {
-            "args": [
-                "run",
-                "vshaxe-build",
-                "--target",
-                "tm-language",
-                "--mode",
-                "install"
-            ],
-            "taskName": "{install-all}",
-            "problemMatcher": "$haxe"
-        },
-        {
-            "args": [
-                "run",
-                "vshaxe-build",
-                "--target",
-                "tm-language",
-                "--display"
-            ],
-            "taskName": "{generate-complete-hxml}",
-            "problemMatcher": "$haxe"
-        },
-        {
-            "args": [
-                "run",
-                "vshaxe-build",
-                "--target",
-                "tm-language",
-                "--gen-tasks"
-            ],
-            "taskName": "{generate-vscode-tasks}",
-            "problemMatcher": "$haxe"
+            "type": "vshaxe-build",
+            "target": "tm-language-tests",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
         }
     ]
 }
