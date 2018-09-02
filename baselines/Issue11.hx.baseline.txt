@@ -5,13 +5,19 @@ import module.Module.SubType as Foo;
 
 >import module.Module.SubType as Foo;
  ^^^^^^
- source.hx storage.type.import.hx
+ source.hx keyword.other.import.hx
        ^
        source.hx
-        ^^^^^^^
+        ^^^^^^
         source.hx support.package.hx
-               ^^^^^^^^^^^^^^
+              ^
+              source.hx punctuation.accessor.hx
+               ^^^^^^
                source.hx entity.name.type.hx
+                     ^
+                     source.hx punctuation.accessor.hx
+                      ^^^^^^^
+                      source.hx entity.name.type.hx
                              ^
                              source.hx
                               ^^

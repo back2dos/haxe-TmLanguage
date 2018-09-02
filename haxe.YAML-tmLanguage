@@ -55,6 +55,7 @@ repository:
     - include: '#operator-assignment'
     - include: '#punctuation-terminator'
     - include: '#punctuation-comma'
+    - include: '#punctuation-accessor'
     - include: '#identifiers'
   identifiers:
     patterns:
@@ -62,30 +63,52 @@ repository:
     - include: '#type-name'
     - include: '#identifier-name'
   package:
-    match: \b(package)(\s+([\w.*]*))?\s*(;)?
-    captures:
-      '1': {name: storage.type.package.hx}
-      '2': {name: support.package.hx}
-      '4': {name: punctuation.terminator.hx}
-    name: meta.package.hx
+    begin: package
+    beginCaptures:
+      '0': {name: keyword.other.package.hx}
+    end: $|(;)
+    endCaptures:
+      '1': {name: punctuation.terminator.hx}
+    patterns:
+    - include: '#type-path'
+    - include: '#type-path-package-name'
   using:
-    match: (using)\s+((?:_*[a-z]\w*\.?)*)((?:_*[A-Z]\w*\.?)+)?(;)?
-    captures:
-      '1': {name: storage.type.using.hx}
-      '2': {name: support.package.hx}
-      '3': {name: entity.name.type.hx}
-      '4': {name: punctuation.terminator.hx}
+    begin: using
+    beginCaptures:
+      '0': {name: keyword.other.using.hx}
+    end: $|(;)
+    endCaptures:
+      '1': {name: punctuation.terminator.hx}
+    patterns:
+    - include: '#type-path'
+    - include: '#type-path-package-name'
   import:
-    match: (import)\s+(?:((\b_*[a-z]\w*\.?)*)(?:((\b_*[A-Z]\w*\.?)+)|(\*))?(\b_*[a-z]\w*|\*)?(?:\s+(as|in)\s+(\b_*[A-Z]\w*)?)?)?\s*(;)?
-    captures:
-      '1': {name: storage.type.import.hx}
-      '2': {name: support.package.hx}
-      '4': {name: entity.name.type.hx}
-      '6': {name: support.package.hx}
-      '7': {name: support.package.hx}
-      '8': {name: keyword.other.hx}
-      '9': {name: entity.name.type.hx}
-      '10': {name: punctuation.terminator.hx}
+    begin: import
+    beginCaptures:
+      '0': {name: keyword.other.import.hx}
+    end: $|(;)
+    endCaptures:
+      '1': {name: punctuation.terminator.hx}
+    patterns:
+    - include: '#type-path'
+    - match: \b(as|in)\b
+      name: keyword.other.hx
+    - match: \*
+      name: constant.language.import-all.hx
+    - match: \b([_A-Za-z]\w*)\b(?=\s*(as|in|$|(;)))
+      name: variable.other.hxt
+    - include: '#type-path-package-name'
+  type-path:
+    patterns:
+    - include: '#global'
+    - include: '#punctuation-accessor'
+    - include: '#type-path-type-name'
+  type-path-type-name:
+    match: \b(_*[A-Z]\w*)\b
+    name: entity.name.type.hx
+  type-path-package-name:
+    match: \b([_A-Za-z]\w*)\b
+    name: support.package.hx
   abstract:
     begin: (?=abstract)
     end: (?<=\})|(;)
@@ -170,7 +193,7 @@ repository:
     - include: '#block'
     - include: '#block-contents'
   enum:
-    begin: (?=enum)
+    begin: (?=enum\s+[A-Z])
     end: (?<=\})|(;)
     endCaptures:
       '1': {name: punctuation.terminator.hx}
@@ -295,7 +318,7 @@ repository:
     - include: '#strings'
   typedef-extension:
     begin: '>'
-    end: ','
+    end: ',|$'
     patterns:
     - include: '#type'
   typedef-simple-field-type-hint:
@@ -539,10 +562,13 @@ repository:
         '0': {name: meta.brace.round.hx}
       patterns:
       - include: '#block-contents'
-    - match: (@)(:?[a-zA-Z_]*)
+    - match: (@)(:?)([a-zA-Z_]*(\.))*([a-zA-Z_]*)?
       captures:
         '1': {name: punctuation.metadata.hx}
         '2': {name: variable.metadata.hx}
+        '3': {name: variable.metadata.hx}
+        '4': {name: punctuation.accessor.hx}
+        '5': {name: variable.metadata.hx}
   method:
     begin: (?=\bfunction\b)
     end: (?<=[\};])
@@ -665,7 +691,7 @@ repository:
     match: '(\?)(?!\s)'
     name: keyword.operator.optional.hx
   variable:
-    begin: (?=\bvar\b)
+    begin: (?=\b(var|final)\b)
     end: (?=$)|(;)
     endCaptures:
       '1': {name: punctuation.terminator.hx}
@@ -675,12 +701,14 @@ repository:
     - include: '#variable-assign'
     - include: '#variable-name-post'
   variable-name:
-    begin: \b(var)\b
+    begin: \b(var|final)\b
     beginCaptures:
       '1': {name: storage.type.variable.hx}
     end: (?=$)|([_a-zA-Z]\w*)
     endCaptures:
       '1': {name: variable.other.hx}
+    patterns:
+    - include: '#operator-optional'
   variable-name-next:
     begin: ','
     beginCaptures:
@@ -721,6 +749,7 @@ repository:
       '0': {name: punctuation.definition.parameters.end.hx}
     name: meta.parameters.hx
     patterns:
+    - include: '#global'
     - include: '#keywords-accessor'
     - include: '#accessor-method'
     - include: '#punctuation-comma'
@@ -732,8 +761,13 @@ repository:
     - match: '\b(get|set)_[_A-Za-z]\w*\b'
       name: entity.name.function.hx
   modifiers:
-    match: \b(public|private|static|dynamic|inline|macro|extern|override|final)\b
-    name: storage.modifier.hx
+    patterns:
+    - match: \b(enum)\b
+      name: storage.type.class
+    - match: \b(public|private|static|dynamic|inline|macro|extern|override)\b
+      name: storage.modifier.hx
+    - match: \b(final)\b(?=\s+(public|private|static|dynamic|inline|macro|extern|override|function))
+      name: storage.modifier.hx
   new-expr:
     name: new.expr.hx
     begin: (?<!\.)\b(new)\b
@@ -795,6 +829,7 @@ repository:
       end: ':|(?=if)|$'
       patterns:
       - include: '#global'
+      - include: '#metadata'
       - match: \b(var)\b\s*([_a-zA-Z]\w*)\b
         captures:
           '1': {name: storage.type.variable.hx}
@@ -809,6 +844,8 @@ repository:
       - include: '#macro-reification'
       - include: '#operator-assignment'
       - include: '#punctuation-comma'
+      - include: '#keywords'
+      - include: '#method-call'
       - include: '#identifiers'
     - match: \b(if|else|return|do|while|for|break|continue|switch|case|default)\b
       name: keyword.control.flow-control.hx
@@ -890,7 +927,7 @@ repository:
       captures:
         '1': {name: punctuation.definition.reification.hx}
         '2': {name: keyword.reification.hx}
-    - match: ((\$)([a-zA-Z.]*))
+    - match: ((\$)([a-zA-Z]*))
       captures:
         '2': {name: punctuation.definition.reification.hx}
         '3': {name: variable.reification.hx}
@@ -952,6 +989,9 @@ repository:
   punctuation-comma:
     match: ','
     name: punctuation.separator.comma.hx
+  punctuation-accessor:
+    match: '\.'
+    name: punctuation.accessor.hx
   punctuation-terminator:
     match: ;
     name: punctuation.terminator.hx
@@ -966,6 +1006,12 @@ repository:
     - include: '#type-parameters'
     - match: '->'
       name: keyword.operator.type.function.hx
+    - match: '&'
+      name: keyword.operator.type.intersection.hx
+    - match: '\?(?=\s*[_A-Z])'
+      name: keyword.operator.optional
+    - match: '\?(?!\s*[_A-Z])'
+      name: punctuation.definition.tag
     - begin: (\{)
       beginCaptures:
         '0': {name: punctuation.definition.block.begin.hx}
@@ -992,6 +1038,7 @@ repository:
     - include: '#punctuation-comma'
     - include: '#function-type-parameter-name'
     - include: '#function-type-parameter-type-hint'
+    - include: '#parameter-assign'
     - include: '#type'
     - include: '#global'
   function-type-parameter-name:
@@ -1002,7 +1049,7 @@ repository:
     begin: ':'
     beginCaptures:
       '0': {name: keyword.operator.type.annotation.hx}
-    end: (?=\)|,)
+    end: (?=\)|,|=)
     patterns:
     - include: '#type'
   type-name:
@@ -1028,7 +1075,8 @@ repository:
     name: meta.type-parameters.hx
     patterns:
     - include: '#type'
-    - include: '#type-parameter-constraint'
+    - include: '#type-parameter-constraint-old'
+    - include: '#type-parameter-constraint-new'
     - include: '#global'
     - include: '#regex'
     - include: '#array'
@@ -1036,7 +1084,7 @@ repository:
     - include: '#strings'
     - include: '#metadata'
     - include: '#punctuation-comma'
-  type-parameter-constraint:
+  type-parameter-constraint-old:
     begin: '(:)\s*(\()'
     beginCaptures:
       '1': {name: keyword.operator.type.annotation.hx}
@@ -1047,6 +1095,9 @@ repository:
     patterns:
     - include: '#type'
     - include: '#punctuation-comma'
+  type-parameter-constraint-new:
+    match: ':'
+    name: keyword.operator.type.annotation.hxt
   identifier-name:
     match: '\b([_A-Za-z]\w*)\b'
     name: variable.other.hx
